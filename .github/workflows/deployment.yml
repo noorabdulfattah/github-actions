@@ -25,7 +25,7 @@ jobs:
         with:
           path: |
             ~/.npm
-          key: deps-node-modules-${{ hashFiles('**/backage-lock.json') }}
+          key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
       - name: Install dependencies
         run: npm ci
       - name: Run tests
@@ -47,7 +47,7 @@ jobs:
         with:
           path: |
             ~/.npm
-          key: deps-node-modules-${{ hashFiles('**/backage-lock.json') }}
+          key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
       - name: Install dependencies
         run: npm ci
       - name: Build project
