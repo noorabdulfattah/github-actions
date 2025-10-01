@@ -1,6 +1,12 @@
 name: Deploy Project
 on:
   push:
+    branches:
+      - main
+      - sandbox
+      - dev-*
+    paths-ignore:
+      - .github/workflows/*
   workflow_dispatch:
   pull_request:
     types: [opened] # Activity type
