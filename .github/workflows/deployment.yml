@@ -91,8 +91,3 @@ jobs:
         name: dist-files
     - name: Output Content
       run: ls -l
-
-  report:
-    needs: [test, deploy]
-
-
