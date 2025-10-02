@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: testing
     env:
-      MY_SECRET: ${{ env.MY_SECRET }}
+      MY_SECRET: ${{ secrets.MY_SECRET }}
     steps:
       - name: Get code
         uses: actions/checkout@v3
