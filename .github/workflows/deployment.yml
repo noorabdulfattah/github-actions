@@ -12,7 +12,11 @@ on:
     types: [opened] # Activity type
 jobs:
   test:
+#    continue-on-error: true
     runs-on: ubuntu-latest
+    environment: testing
+    env:
+      MY_SECRET: ${{ env.MY_SECRET }}
     steps:
       - name: Get code
         uses: actions/checkout@v3
@@ -21,15 +25,26 @@ jobs:
         with:
           node-version: 18
       - name: Cache dependencies
+        id: cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.npm
           key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
       - name: Install dependencies
-        run: npm ci
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          npm ci
+          echo "My secret value is:  ${{ env.MY_SECRET}}"
       - name: Run tests
+        id: run-tests
         run: npm test
+      - name: Upload Test Report
+        if: failure() && steps.run-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: test.json
   build:
     needs: test
     runs-on: ubuntu-latest
@@ -76,4 +91,8 @@ jobs:
         name: dist-files
     - name: Output Content
       run: ls -l
+
+  report:
+    needs: [test, deploy]
+
 
