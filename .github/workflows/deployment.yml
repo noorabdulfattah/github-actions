@@ -91,3 +91,7 @@ jobs:
         name: dist-files
     - name: Output Content
       run: ls -l
+
+  report:
+    needs: [deploy]
+    uses: ./.github/workflows/reusable.yml

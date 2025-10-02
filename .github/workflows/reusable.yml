@@ -1,0 +1,8 @@
+name: Reusable Deploy
+on: workflow_call
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report Execution
+        run: echo "This is to report the execution"
