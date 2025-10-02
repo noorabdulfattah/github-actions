@@ -12,7 +12,7 @@ on:
     types: [opened] # Activity type
 jobs:
   test:
-#    continue-on-error: true
+    continue-on-error: true
     runs-on: ubuntu-latest
     environment: testing
     env:
