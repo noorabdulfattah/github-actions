@@ -7,6 +7,10 @@ on:
         description: "Target environment (dev/stage/prod)"
         required: true
         default: "dev"
+  push:
+    branches:
+      - main
+      - dev
 
   schedule:
     - cron: "0 2 * * *" # optional: daily at 02:00 UTC
