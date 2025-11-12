@@ -9,7 +9,7 @@ on:
         default: "main"
         type: choice
         options:
-          - main
+          - catalog-main
           - catalog-sandbox
           - catalog-sources
           - catalog-config
