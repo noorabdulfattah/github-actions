@@ -1,29 +1,28 @@
-name: Push on Approval to catalog-main
+name: Push on Merge to catalog-main
 
 on:
-  pull_request_review:
-    types: [submitted]
+  pull_request:
+    types: [closed]    # triggers when PR is closed (merged or manually closed)
 
 jobs:
-  push-after-approval:
+  push-after-merge:
     runs-on: ubuntu-latest
-
-    # Only run when:
-    # - the review state is "approved"
-    # - the PR base branch is "catalog-main"
-    if: >
-      github.event.review.state == 'approved' &&
-      github.event.pull_request.base.ref == 'catalog-main'
 
     permissions:
       contents: write    # needed to push commits
 
+    # Only run if:
+    # - PR is merged
+    # - PR base is catalog-main
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'catalog-main'
+
     steps:
-      - name: Show PR and review info
+      - name: Show PR info
         run: |
-          echo "PR #${{ github.event.pull_request.number }}"
+          echo "PR #${{ github.event.pull_request.number }} was merged."
           echo "Base branch: ${{ github.event.pull_request.base.ref }}"
-          echo "Review state: ${{ github.event.review.state }}"
 
       - name: Checkout catalog-main
         uses: actions/checkout@v4
@@ -37,18 +36,18 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       # ------------------------------------------------------------------
-      # Replace this block with your real "push" command / script.
-      # This is where you call your data.world push, or any sync logic.
+      # Replace this block with your REAL push command
       # ------------------------------------------------------------------
       - name: Run push command
         run: |
-          echo "Running push command after approval to catalog-main..."
-          # TODO: replace this with your actual push logic, e.g.:
-          # ./push.command
-          # or:
-          # python -m src.catalog_synchronizer.cli push --env prod
+          echo "Running push command after merge into catalog-main..."
+          # Example test action:
           mkdir -p tests/push-output
           echo "Push executed at $(date -u +'%Y-%m-%dT%H:%M:%SZ')" > tests/push-output/push_run_$(date -u +'%Y%m%d-%H%M%S').txt
+          # REAL COMMAND GOES HERE:
+          # ./push.command
+          # python -m src.catalog_synchronizer.cli push --env prod
+          # catalog-sync push --env prod
 
       - name: Check for changes
         id: git_status
@@ -63,7 +62,7 @@ jobs:
         if: steps.git_status.outputs.changes == 'true'
         run: |
           ID=$(date -u +'%Y%m%d-%H%M%S')
-          COMMIT_MSG="Auto push after PR approval to catalog-main - ID:$ID"
+          COMMIT_MSG="Auto push after PR merge into catalog-main - ID:$ID"
           echo "Committing changes: $COMMIT_MSG"
           git add .
           git commit -m "$COMMIT_MSG"
