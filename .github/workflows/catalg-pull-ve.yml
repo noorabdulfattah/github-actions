@@ -64,7 +64,6 @@ jobs:
         if: matrix.catalog_branch == 'catalog-sandbox'
         run: |
           echo "Running promote.command for catalog-sandbox..."
-          ./promote.command
           echo "Contents are promoted."
 
       # ---------------------------------------------------------
