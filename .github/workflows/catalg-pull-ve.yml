@@ -14,6 +14,10 @@ jobs:
   pull-and-commit:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+      pull-requests: write
+
     strategy:
       matrix:
         catalog_branch:
@@ -57,8 +61,7 @@ jobs:
           cat tests/output/*.txt
 
       # ---------------------------------------------------------
-      #   ⭐ Branch-Specific Logic
-      #   ONLY RUN promote.command for catalog-sandbox
+      #   ⭐ Branch-Specific Logic: catalog-sandbox only
       # ---------------------------------------------------------
       - name: Promote content (sandbox only)
         if: matrix.catalog_branch == 'catalog-sandbox'
@@ -93,4 +96,45 @@ jobs:
 
       - name: No changes detected
         if: steps.git_status.outputs.changes == 'false'
-        run: echo "No changes detected for ${{ matrix.catalog_branch }}."
+        run: echo "No changes to commit for ${{ matrix.catalog_branch }}."
+
+      # ---------------------------------------------------------
+      #   🧩 Create PR from catalog-sandbox → catalog-main
+      #   Runs only for catalog-sandbox, after push
+      # ---------------------------------------------------------
+      - name: Create PR to catalog-main (sandbox only)
+        if: matrix.catalog_branch == 'catalog-sandbox'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const base = 'catalog-main';
+            const head = 'catalog-sandbox';
+            const title = 'Promote from catalog-sandbox to catalog-main';
+            const body = 'Automated promotion PR from catalog-sandbox to catalog-main.';
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Check if an open PR already exists from sandbox -> main
+            const existing = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: 'open',
+              head: `${owner}:${head}`,
+              base,
+            });
+
+            if (existing.data.length > 0) {
+              core.info(`Open PR already exists from ${head} to ${base}: #${existing.data[0].number}`);
+            } else {
+              const pr = await github.rest.pulls.create({
+                owner,
+                repo,
+                title,
+                head,
+                base,
+                body,
+              });
+              core.info(`Created PR #${pr.data.number} from ${head} to ${base}`);
+            }
