@@ -97,6 +97,7 @@ jobs:
         run: |
           echo "Running test file creation for branch: ${{ matrix.catalog_branch }}"
           echo "Using CATALOG_TOKEN (present? yes/no): ${CATALOG_TOKEN:+yes}"
+          echo "DW_OWNER set to: $DW_OWNER"
           mkdir -p tests/output
           TS=$(date +'%Y%m%d-%H%M%S')
           FILE="tests/output/testfile_${{ matrix.catalog_branch }}_${TS}.txt"
