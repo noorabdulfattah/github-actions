@@ -1,27 +1,22 @@
-name: Push on Merge to catalog-main
+name: Push on merge into catalog-main
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
-      - catalog-main    # only PRs whose *base* is catalog-main
+      - main    # runs on any push to catalog-main (including merges from catalog-sandbox)
 
 jobs:
   push-after-merge:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
-
-    # Only run if the PR was actually merged, not just closed
-    if: github.event.pull_request.merged == true
+      contents: write    # needed to push commits
 
     steps:
-      - name: Show PR info
+      - name: Show push info
         run: |
-          echo "PR #${{ github.event.pull_request.number }} was merged."
-          echo "Base branch: ${{ github.event.pull_request.base.ref }}"
-          echo "Head branch: ${{ github.event.pull_request.head.ref }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
 
       - name: Checkout catalog-main
         uses: actions/checkout@v4
@@ -35,15 +30,16 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       # --------------------------------------------
-      # Replace with your REAL push command
+      # Replace this block with your REAL push logic
       # --------------------------------------------
       - name: Run push command
         run: |
-          echo "Running push command after merge into catalog-main..."
+          echo "Running push command after changes reached catalog-main..."
+          # Example test action (you can delete in real setup):
           mkdir -p tests/push-output
           echo "Push executed at $(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
             > tests/push-output/push_run_$(date -u +'%Y%m%d-%H%M%S').txt
-          # Example real command:
+          # REAL COMMAND GOES HERE, e.g.:
           # ./push.command
           # python -m src.catalog_synchronizer.cli push --env prod
 
@@ -60,7 +56,7 @@ jobs:
         if: steps.git_status.outputs.changes == 'true'
         run: |
           ID=$(date -u +'%Y%m%d-%H%M%S')
-          COMMIT_MSG="Auto push after PR merge into catalog-main - ID:$ID"
+          COMMIT_MSG="Auto push after changes on catalog-main - ID:$ID"
           echo "Committing changes: $COMMIT_MSG"
           git add .
           git commit -m "$COMMIT_MSG"
