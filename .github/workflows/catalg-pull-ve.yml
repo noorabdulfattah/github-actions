@@ -46,7 +46,9 @@ jobs:
             pip install -r requirements.txt
           fi
 
-      # ✅ Simulate catalog pull for this specific catalog branch
+      # ---------------------------------------------------------
+      #   🔧 Normal file creation (simulated pull)
+      # ---------------------------------------------------------
       - name: Simulate catalog pull (create test file)
         run: |
           echo "Running test file creation for branch: ${{ matrix.catalog_branch }}"
@@ -54,6 +56,20 @@ jobs:
           echo "This is a test run for branch: ${{ matrix.catalog_branch }}" > tests/output/testfile_${{ matrix.catalog_branch }}_$(date +'%Y%m%d-%H%M%S').txt
           cat tests/output/*.txt
 
+      # ---------------------------------------------------------
+      #   ⭐ Branch-Specific Logic
+      #   ONLY RUN promote.command for catalog-sandbox
+      # ---------------------------------------------------------
+      - name: Promote content (sandbox only)
+        if: matrix.catalog_branch == 'catalog-sandbox'
+        run: |
+          echo "Running promote.command for catalog-sandbox..."
+          ./promote.command
+          echo "Contents are promoted."
+
+      # ---------------------------------------------------------
+      #   🔍 Git detection
+      # ---------------------------------------------------------
       - name: Check for changes
         id: git_status
         run: |
@@ -63,17 +79,19 @@ jobs:
             echo "changes=false" >> $GITHUB_OUTPUT
           fi
 
+      # ---------------------------------------------------------
+      #   📝 Commit changes
+      # ---------------------------------------------------------
       - name: Commit and push changes
         if: steps.git_status.outputs.changes == 'true'
         run: |
-          ID=$(date +'%Y%m%d-%H%M%S')  # unique identifier based on UTC timestamp
+          ID=$(date +'%Y%m%d-%H%M%S')
           COMMIT_MSG="Catalog sync test commit (${{ matrix.catalog_branch }}) - ID:$ID"
           echo "Committing changes: $COMMIT_MSG"
-
           git add .
           git commit -m "$COMMIT_MSG"
           git push origin ${{ matrix.catalog_branch }}
 
       - name: No changes detected
         if: steps.git_status.outputs.changes == 'false'
-        run: echo "No changes to commit for ${{ matrix.catalog_branch }}."
+        run: echo "No changes detected for ${{ matrix.catalog_branch }}."
