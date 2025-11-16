@@ -27,9 +27,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ matrix.catalog_branch }}
-          fetch-depth: 0    # required for commits
+          fetch-depth: 0    # required for commits and merges
 
-      # ✅ NEW: merge latest main into the checked-out catalog branch
+      - name: Set up Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # ✅ Merge latest main into the checked-out catalog branch
       - name: Merge main into catalog branch
         run: |
           echo "Merging main into ${{ matrix.catalog_branch }}..."
@@ -38,11 +43,6 @@ jobs:
             echo "Merge conflict while merging main into ${{ matrix.catalog_branch }}."
             exit 1
           }
-
-      - name: Set up Git user
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Set up Python
         uses: actions/setup-python@v5
