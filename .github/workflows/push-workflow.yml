@@ -4,7 +4,10 @@ on:
   pull_request_target:
     branches:
       - catalog-main    # runs on any push to catalog-main (including merges from catalog-sandbox)
-
+  push:
+    branches:
+      - catalog-main
+  workflow_dispatch:        # allow manual run from Actions tab
 
 jobs:
   push-after-merge:
