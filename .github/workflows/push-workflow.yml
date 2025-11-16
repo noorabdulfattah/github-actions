@@ -1,0 +1,77 @@
+name: Push on merge into catalog-main
+
+on:
+  pull_request:
+    branches:
+      - catalog-main   # base branch of the PR
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed         # includes merged
+
+  push:
+    branches:
+      - catalog-main
+  workflow_dispatch:        # allow manual run from Actions tab
+
+jobs:
+  push-after-merge:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write    # needed to push commits
+
+    steps:
+      - name: Show push info
+        run: |
+          echo "Ref: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+
+      - name: Checkout catalog-main
+        uses: actions/checkout@v4
+        with:
+          ref: catalog-main
+          fetch-depth: 0
+
+      - name: Configure Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # --------------------------------------------
+      # Replace this block with your REAL push logic
+      # --------------------------------------------
+      - name: Run push command
+        run: |
+          echo "Running push command after changes reached catalog-main..."
+          # Example test action (you can delete in real setup):
+          mkdir -p tests/push-output
+          echo "Push executed at $(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            > tests/push-output/push_run_$(date -u +'%Y%m%d-%H%M%S').txt
+          # REAL COMMAND GOES HERE, e.g.:
+          # ./push.command
+          # python -m src.catalog_synchronizer.cli push --env prod
+
+      - name: Check for changes
+        id: git_status
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push changes to catalog-main
+        if: steps.git_status.outputs.changes == 'true'
+        run: |
+          ID=$(date -u +'%Y%m%d-%H%M%S')
+          COMMIT_MSG="Auto push after changes on catalog-main - ID:$ID"
+          echo "Committing changes: $COMMIT_MSG"
+          git add .
+          git commit -m "$COMMIT_MSG"
+          git push origin catalog-main
+
+      - name: No changes to commit
+        if: steps.git_status.outputs.changes == 'false'
+        run: echo "No local changes after push command; nothing to commit."
