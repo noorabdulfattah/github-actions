@@ -34,6 +34,36 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      # Map per-branch secret into a common env var CATALOG_TOKEN
+      - name: Set per-branch env vars (CATALOG_TOKEN + DW_OWNER)
+        run: |
+          echo "Setting env variables for branch: ${{ matrix.catalog_branch }}"
+          
+          case "${{ matrix.catalog_branch }}" in
+            catalog-main)
+              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_MAIN_TOKEN }}" >> "$GITHUB_ENV"
+              echo "DW_OWNER=main" >> "$GITHUB_ENV"
+              ;;
+            catalog-sandbox)
+              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_SANDBOX_TOKEN }}" >> "$GITHUB_ENV"
+              echo "DW_OWNER=catalog-sandbox" >> "$GITHUB_ENV"
+              ;;
+            catalog-sources)
+              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_SOURCES_TOKEN }}" >> "$GITHUB_ENV"
+              echo "DW_OWNER=catalog-sources" >> "$GITHUB_ENV"
+              ;;
+            catalog-config)
+              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_CONFIG_TOKEN }}" >> "$GITHUB_ENV"
+              echo "DW_OWNER=catalog-config" >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "Unknown catalog branch: ${{ matrix.catalog_branch }}" >&2
+              exit 1
+              ;;
+          esac
+          
+          echo "DW_OWNER set to: $DW_OWNER"
+
       # ✅ Merge latest main into the checked-out catalog branch
       - name: Merge main into catalog branch
         run: |
@@ -58,13 +88,21 @@ jobs:
 
       # ---------------------------------------------------------
       #   🔧 Normal file creation (simulated pull)
+      #   Demonstrates using CATALOG_TOKEN
       # ---------------------------------------------------------
       - name: Simulate catalog pull (create test file)
+        env:
+          DW_AUTH_TOKEN: ${{ env.DW_AUTH_TOKEN }}
+          DW_OWNER:  ${{ env.DW_OWNER }}
         run: |
           echo "Running test file creation for branch: ${{ matrix.catalog_branch }}"
+          echo "Using CATALOG_TOKEN (present? yes/no): ${CATALOG_TOKEN:+yes}"
           mkdir -p tests/output
-          echo "This is a test run for branch: ${{ matrix.catalog_branch }}" > tests/output/testfile_${{ matrix.catalog_branch }}_$(date +'%Y%m%d-%H%M%S').txt
-          cat tests/output/*.txt
+          TS=$(date +'%Y%m%d-%H%M%S')
+          FILE="tests/output/testfile_${{ matrix.catalog_branch }}_${TS}.txt"
+          echo "This is a test run for branch: ${{ matrix.catalog_branch }}" > "$FILE"
+          echo "Token set: ${CATALOG_TOKEN:+yes}" >> "$FILE"
+          cat "$FILE"
 
       # ---------------------------------------------------------
       #   ⭐ Branch-Specific Logic
