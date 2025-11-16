@@ -1,9 +1,10 @@
 name: Push on merge into catalog-main
 
 on:
-  push:
+  pull_request_target:
     branches:
-      - main    # runs on any push to catalog-main (including merges from catalog-sandbox)
+      - catalog-main    # runs on any push to catalog-main (including merges from catalog-sandbox)
+
 
 jobs:
   push-after-merge:
