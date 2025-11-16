@@ -2,27 +2,26 @@ name: Push on Merge to catalog-main
 
 on:
   pull_request:
-    types: [closed]    # triggers when PR is closed (merged or manually closed)
+    types: [closed]
+    branches:
+      - catalog-main    # only PRs whose *base* is catalog-main
 
 jobs:
   push-after-merge:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write    # needed to push commits
+      contents: write
 
-    # Only run if:
-    # - PR is merged
-    # - PR base is catalog-main
-    if: >
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == 'catalog-main'
+    # Only run if the PR was actually merged, not just closed
+    if: github.event.pull_request.merged == true
 
     steps:
       - name: Show PR info
         run: |
           echo "PR #${{ github.event.pull_request.number }} was merged."
           echo "Base branch: ${{ github.event.pull_request.base.ref }}"
+          echo "Head branch: ${{ github.event.pull_request.head.ref }}"
 
       - name: Checkout catalog-main
         uses: actions/checkout@v4
@@ -35,27 +34,26 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      # ------------------------------------------------------------------
-      # Replace this block with your REAL push command
-      # ------------------------------------------------------------------
+      # --------------------------------------------
+      # Replace with your REAL push command
+      # --------------------------------------------
       - name: Run push command
         run: |
           echo "Running push command after merge into catalog-main..."
-          # Example test action:
           mkdir -p tests/push-output
-          echo "Push executed at $(date -u +'%Y-%m-%dT%H:%M:%SZ')" > tests/push-output/push_run_$(date -u +'%Y%m%d-%H%M%S').txt
-          # REAL COMMAND GOES HERE:
+          echo "Push executed at $(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            > tests/push-output/push_run_$(date -u +'%Y%m%d-%H%M%S').txt
+          # Example real command:
           # ./push.command
           # python -m src.catalog_synchronizer.cli push --env prod
-          # catalog-sync push --env prod
 
       - name: Check for changes
         id: git_status
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
-            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "changes=true" >> "$GITHUB_OUTPUT"
           else
-            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "changes=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Commit and push changes to catalog-main
