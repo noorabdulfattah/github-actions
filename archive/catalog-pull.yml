@@ -1,0 +1,172 @@
+name: Catalog Pull and Commit (Test, Multi-branch)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: "Target branch to sync (test)"
+        required: true
+        default: "main"
+        type: choice
+        options:
+          - catalog-main
+          - catalog-sandbox
+          - catalog-sources
+          - catalog-config
+
+  push:
+    branches:
+      - main
+      - catalog-sandbox
+      - catalog-sources
+      - catalog-config
+
+  schedule:
+    - cron: "0 2 * * *"  # optional: daily at 02:00 UTC
+
+jobs:
+  pull-and-commit:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        branch: [main, catalog-sandbox, catalog-sources, catalog-config]
+
+    steps:
+      # Decide whether this matrix item should actually run,
+      # and set TARGET_BRANCH + SKIP_REST accordingly.
+      - name: Resolve TARGET_BRANCH and decide skip
+        run: |
+          echo "Matrix branch is: ${{ matrix.branch }}"
+          echo "TARGET_BRANCH=${{ matrix.branch }}" >> "$GITHUB_ENV"
+
+          # Default: don't skip
+          SKIP_REST=false
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Only run for the selected branch
+            if [ "${{ matrix.branch }}" != "${{ github.event.inputs.target_branch }}" ]; then
+              SKIP_REST=true
+            fi
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            # Only run for the pushed branch
+            if [ "${{ matrix.branch }}" != "${{ github.ref_name }}" ]; then
+              SKIP_REST=true
+            fi
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            # For schedule: run for all branches (no change)
+            SKIP_REST=false
+          fi
+
+          echo "SKIP_REST=$SKIP_REST" >> "$GITHUB_ENV"
+          echo "SKIP_REST=$SKIP_REST"
+
+      - name: Map env vars (DW_OWNER, DW_AUTH_TOKEN, API_BASE, ENVIRONMENT)
+        if: env.SKIP_REST != 'true'
+        shell: bash
+        run: |
+          echo "Using TARGET_BRANCH=$TARGET_BRANCH"
+
+          # DW_OWNER: same as branch name
+          echo "DW_OWNER=$TARGET_BRANCH" >> "$GITHUB_ENV"
+
+          # API_BASE: from repo variables (set this in Settings → Variables)
+          echo "API_BASE=${{ vars.API_BASE }}" >> "$GITHUB_ENV"
+
+          # ENVIRONMENT: mirror the branch for now
+          echo "ENVIRONMENT=$TARGET_BRANCH" >> "$GITHUB_ENV"
+
+          # Map tokens based on branch (test secrets in this repo)
+          case "$TARGET_BRANCH" in
+            main)
+              echo "DW_AUTH_TOKEN=${{ secrets.DW_TOKEN_MAIN }}" >> "$GITHUB_ENV"
+              ;;
+            catalog-sandbox)
+              echo "DW_AUTH_TOKEN=${{ secrets.DW_TOKEN_CATALOG_SANDBOX }}" >> "$GITHUB_ENV"
+              ;;
+            catalog-sources)
+              echo "DW_AUTH_TOKEN=${{ secrets.DW_TOKEN_CATALOG_SOURCES }}" >> "$GITHUB_ENV"
+              ;;
+            catalog-config)
+              echo "DW_AUTH_TOKEN=${{ secrets.DW_TOKEN_CATALOG_CONFIG }}" >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "Unknown branch '$TARGET_BRANCH' – aborting." >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Checkout TARGET_BRANCH
+        if: env.SKIP_REST != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        if: env.SKIP_REST != 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set up Python (optional)
+        if: env.SKIP_REST != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies (optional)
+        if: env.SKIP_REST != 'true'
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+          fi
+
+      # 🔧 TEST STEP: simulate "pull from data.world" by creating a file
+      - name: Simulate pull (create test file per branch)
+        if: env.SKIP_REST != 'true'
+        env:
+          DW_OWNER: ${{ env.DW_OWNER }}
+          DW_AUTH_TOKEN: ${{ env.DW_AUTH_TOKEN }}
+          API_BASE: ${{ env.API_BASE }}
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+        run: |
+          mkdir -p .github/test-output
+
+          TS=$(date -u +'%Y%m%d-%H%M%S')
+          FILE=".github/test-output/simulated_pull_${TARGET_BRANCH}_${TS}.txt"
+
+          echo "Simulated pull for branch: $TARGET_BRANCH" > "$FILE"
+          echo "DW_OWNER=$DW_OWNER" >> "$FILE"
+          echo "ENVIRONMENT=$ENVIRONMENT" >> "$FILE"
+          echo "API_BASE=$API_BASE" >> "$FILE"
+          echo "Generated at (UTC): $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$FILE"
+
+          echo "Created test file: $FILE"
+          cat "$FILE"
+
+      - name: Detect changes
+        if: env.SKIP_REST != 'true'
+        id: changes
+        run: |
+          if [[ -n "$(git.status --porcelain)" ]]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push
+        if: env.SKIP_REST != 'true' && steps.changes.outputs.has_changes == 'true'
+        run: |
+          ID=$(date -u +'%Y%m%d-%H%M%S')
+          MSG="TEST: simulated DW pull ($TARGET_BRANCH) - ID:$ID"
+
+          echo "Committing changes with message: $MSG"
+          git add -A
+          git.commit -m "$MSG"
+          git push origin "$TARGET_BRANCH"
+
+      - name: No changes
+        if: env.SKIP_REST != 'true' && steps.changes.outputs.has_changes != 'true'
+        run: echo "No changes to commit for $TARGET_BRANCH."

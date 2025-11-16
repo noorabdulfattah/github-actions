@@ -1,0 +1,106 @@
+name: Catalog Pull and Commit (Test, Multi-branch)
+
+on:
+  workflow_dispatch: {}
+
+  push:
+    branches:
+      - main   # whenever you push to main, this runs for every catalog-* branch
+
+  schedule:
+    - cron: "0 2 * * *" # optional: daily at 02:00 UTC
+
+jobs:
+  pull-and-commit:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        catalog_branch:
+          - catalog-main
+          - catalog-sandbox
+          - catalog-sources
+          - catalog-config
+
+    steps:
+      - name: Checkout catalog branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.catalog_branch }}
+          fetch-depth: 0    # required for commits and merges
+
+      - name: Set up Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # ✅ Merge latest main into the checked-out catalog branch
+      - name: Merge main into catalog branch
+        run: |
+          echo "Merging main into ${{ matrix.catalog_branch }}..."
+          git fetch origin main
+          git merge --no-edit origin/main || {
+            echo "Merge conflict while merging main into ${{ matrix.catalog_branch }}."
+            exit 1
+          }
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+          fi
+
+      # ---------------------------------------------------------
+      #   🔧 Normal file creation (simulated pull)
+      # ---------------------------------------------------------
+      - name: Simulate catalog pull (create test file)
+        run: |
+          echo "Running test file creation for branch: ${{ matrix.catalog_branch }}"
+          mkdir -p tests/output
+          echo "This is a test run for branch: ${{ matrix.catalog_branch }}" > tests/output/testfile_${{ matrix.catalog_branch }}_$(date +'%Y%m%d-%H%M%S').txt
+          cat tests/output/*.txt
+
+      # ---------------------------------------------------------
+      #   ⭐ Branch-Specific Logic
+      #   ONLY RUN promote.command for catalog-sandbox
+      # ---------------------------------------------------------
+      - name: Promote content (sandbox only)
+        if: matrix.catalog_branch == 'catalog-sandbox'
+        run: |
+          echo "Running promote.command for catalog-sandbox..."
+          echo "Contents are promoted."
+
+      # ---------------------------------------------------------
+      #   🔍 Git detection
+      # ---------------------------------------------------------
+      - name: Check for changes
+        id: git_status
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      # ---------------------------------------------------------
+      #   📝 Commit changes
+      # ---------------------------------------------------------
+      - name: Commit and push changes
+        if: steps.git_status.outputs.changes == 'true'
+        run: |
+          ID=$(date +'%Y%m%d-%H%M%S')
+          COMMIT_MSG="Catalog sync test commit (${{ matrix.catalog_branch }}) - ID:$ID"
+          echo "Committing changes: $COMMIT_MSG"
+          git add .
+          git commit -m "$COMMIT_MSG"
+          git push origin ${{ matrix.catalog_branch }}
+
+      - name: No changes detected
+        if: steps.git_status.outputs.changes == 'false'
+        run: echo "No changes detected for ${{ matrix.catalog_branch }}."
