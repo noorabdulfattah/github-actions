@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: catalog-synchronizer
+Version: 0.1.0
+Summary: Data.world catalog synchronizer
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+
+# github-actions
