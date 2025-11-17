@@ -6,7 +6,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def run_push(*, owner: str, token: str, api_base: str, environment: str) -> None:
+def run_push(*, owner: str, token: str, api_base: str) -> None:
     """
     Push catalog configuration/metadata to data.world.
     """
