@@ -75,7 +75,7 @@ jobs:
       - name: Merge main into catalog branch
         run: |
           echo "Merging main into ${{ matrix.catalog_branch }}..."
-          git.fetch origin main
+          git fetch origin main
           git merge --no-edit origin/main || {
             echo "Merge conflict while merging main into ${{ matrix.catalog_branch }}."
             exit 1
