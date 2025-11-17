@@ -29,7 +29,7 @@ jobs:
 
     env:
       DW_OWNER: catalog-main
-      CATALOG_TOKEN: ${{ secrets.CATALOG_MAIN_TOKEN }}
+      DW_AUTH_TOKEN: ${{ secrets.CATALOG_MAIN_TOKEN }}
       ENVIRONMENT: prod
 
     steps:
@@ -64,7 +64,7 @@ jobs:
       - name: Run push.sh
         env:
           API_BASE: ${{ env.API_BASE }}
-          CATALOG_TOKEN: ${{ env.CATALOG_TOKEN }}
+          DW_AUTH_TOKEN: ${{ env.DW_AUTH_TOKEN }}
           DW_OWNER: ${{ env.DW_OWNER }}
           ENVIRONMENT: ${{ env.ENVIRONMENT }}
         run: |

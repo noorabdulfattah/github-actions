@@ -39,29 +39,29 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Set per-branch env vars (CATALOG_TOKEN, DW_OWNER, CATALOG_BRANCH)
+      - name: Set per-branch env vars (DW_AUTH_TOKEN, DW_OWNER, CATALOG_BRANCH)
         run: |
           echo "Setting env variables for branch: ${{ matrix.catalog_branch }}"
 
           case "${{ matrix.catalog_branch }}" in
             catalog-main)
-              echo "CATALOG_TOKEN=${{ secrets.CATALOG_MAIN_TOKEN }}" >> "$GITHUB_ENV"
+              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_MAIN_TOKEN }}" >> "$GITHUB_ENV"
               echo "DW_OWNER=catalog-main" >> "$GITHUB_ENV"
               ;;
             catalog-sandbox)
-              echo "CATALOG_TOKEN=${{ secrets.CATALOG_SANDBOX_TOKEN }}" >> "$GITHUB_ENV"
+              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_SANDBOX_TOKEN }}" >> "$GITHUB_ENV"
               echo "DW_OWNER=catalog-sandbox" >> "$GITHUB_ENV"
               ;;
             catalog-sources)
-              echo "CATALOG_TOKEN=${{ secrets.CATALOG_SOURCES_TOKEN }}" >> "$GITHUB_ENV"
+              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_SOURCES_TOKEN }}" >> "$GITHUB_ENV"
               echo "DW_OWNER=catalog-sources" >> "$GITHUB_ENV"
               ;;
             catalog-config)
-              echo "CATALOG_TOKEN=${{ secrets.CATALOG_CONFIG_TOKEN }}" >> "$GITHUB_ENV"
+              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_CONFIG_TOKEN }}" >> "$GITHUB_ENV"
               echo "DW_OWNER=catalog-config" >> "$GITHUB_ENV"
               ;;
             ontology)
-              echo "CATALOG_TOKEN=${{ secrets.CATALOG_ONTOLOGY_TOKEN }}" >> "$GITHUB_ENV"
+              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_ONTOLOGY_TOKEN }}" >> "$GITHUB_ENV"
               echo "DW_OWNER=ontology" >> "$GITHUB_ENV"
               ;;
             *)
@@ -93,7 +93,7 @@ jobs:
       - name: Run pull-promote.sh
         env:
           API_BASE: ${{ env.API_BASE }}
-          CATALOG_TOKEN: ${{ env.CATALOG_TOKEN }}
+          DW_AUTH_TOKEN: ${{ env.DW_AUTH_TOKEN }}
           DW_OWNER: ${{ env.DW_OWNER }}
           CATALOG_BRANCH: ${{ env.CATALOG_BRANCH }}
         run: |
