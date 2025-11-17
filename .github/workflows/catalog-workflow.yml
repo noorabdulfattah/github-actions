@@ -46,7 +46,7 @@ jobs:
           case "${{ matrix.catalog_branch }}" in
             catalog-main)
               echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_MAIN_TOKEN }}" >> "$GITHUB_ENV"
-              echo "DW_OWNER=catalog-main" >> "$GITHUB_ENV"
+              echo "DW_OWNER=main" >> "$GITHUB_ENV"
               ;;
             catalog-sandbox)
               echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_SANDBOX_TOKEN }}" >> "$GITHUB_ENV"
