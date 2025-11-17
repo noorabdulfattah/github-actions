@@ -2,4 +2,4 @@
 set -euo pipefail
 
 echo "Running catalog-sync push..."
-catalog-sync push --env "${ENVIRONMENT:-prod}"
+catalog-sync push --to "main"

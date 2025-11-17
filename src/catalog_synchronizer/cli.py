@@ -39,12 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Auth token (default: CATALOG_TOKEN or DW_AUTH_TOKEN env).",
     )
-    parser.add_argument(
-        "--env",
-        dest="environment",
-        default=None,
-        help="Logical environment (dev/stage/prod; default: ENVIRONMENT env).",
-    )
+
     parser.add_argument(
         "-v", "--verbose",
         action="count",
@@ -57,13 +52,13 @@ def build_parser() -> argparse.ArgumentParser:
     # pull
     pull_p = subparsers.add_parser(
         "pull",
-        help="Pull projects/files from data.world into the repo.",
+        help="Pull projects/files from data catalog into the repo.",
     )
     pull_p.add_argument(
-        "--branch",
-        dest="branch",
+        "--from",
+        dest="owner",
         required=True,
-        help="Catalog branch name (e.g., catalog-sandbox, catalog-main).",
+        help="Catalog org name (e.g., catalog-sandbox, main).",
     )
 
     # promote
@@ -72,20 +67,26 @@ def build_parser() -> argparse.ArgumentParser:
         help="Promote content from sandbox branch to main branch.",
     )
     promote_p.add_argument(
-        "--from-branch",
+        "--from",
         required=True,
-        help="Source branch (e.g., catalog-sandbox).",
+        help="Source catalog (e.g., catalog-sandbox).",
     )
     promote_p.add_argument(
-        "--to-branch",
+        "--to",
         required=True,
-        help="Target branch (e.g., catalog-main).",
+        help="Target catalog (e.g., main).",
     )
 
     # push
-    subparsers.add_parser(
+    push_p = subparsers.add_parser(
         "push",
-        help="Push catalog configuration to data.world.",
+        help="Push promoted projects to the target catalog",
+    )
+
+    push_p.add_argument(
+        "--to",
+        required=True,
+        help="Target catalog (e.g., main).",
     )
 
     return parser
