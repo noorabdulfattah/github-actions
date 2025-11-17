@@ -1,0 +1,6 @@
+Simulated pull for branch: catalog-sandbox
+DW_OWNER=catalog-sandbox
+API_BASE=https://api.data.world/v0
+CATALOG_TOKEN set: 
+Generated at (UTC): 2025-11-17T12:39:09Z
+Contents are promoted.
