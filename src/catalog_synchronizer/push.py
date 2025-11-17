@@ -12,7 +12,7 @@ def run_push(*, owner: str, token: str, api_base: str) -> None:
     """
     log.info(
         "Running push: owner=%s env=%s api_base=%s",
-        owner, environment, api_base
+        owner, api_base
     )
     # TODO: your real push logic:
     # - read local config

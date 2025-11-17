@@ -12,7 +12,7 @@ def run_pull(*, owner: str, token: str, api_base: str, branch: str) -> None:
     """
     log.info(
         "Running pull: owner=%s branch=%s env=%s api_base=%s",
-        owner, branch, environment, api_base
+        owner, branch, api_base
     )
     # TODO: your real pull logic here.
     # - call data.world APIs using token/api_base
