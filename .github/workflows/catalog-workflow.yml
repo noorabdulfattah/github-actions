@@ -5,10 +5,14 @@ on:
 
   push:
     branches:
-      - main   # whenever you push to main, this runs for every catalog-* branch
+      - main
 
   schedule:
-    - cron: "0 2 * * *" # optional: daily at 02:00 UTC
+    - cron: "0 2 * * *"
+
+# Global API_BASE for all jobs
+env:
+  API_BASE: "https://api.data.world/v0"   # adjust to your real base
 
 jobs:
   pull-and-commit:
@@ -27,33 +31,32 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ matrix.catalog_branch }}
-          fetch-depth: 0    # required for commits and merges
+          fetch-depth: 0
 
       - name: Set up Git user
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      # Map per-branch secret into a common env var CATALOG_TOKEN
-      - name: Set per-branch env vars (CATALOG_TOKEN + DW_OWNER)
+      - name: Set per-branch env vars (CATALOG_TOKEN, DW_OWNER, CATALOG_BRANCH)
         run: |
           echo "Setting env variables for branch: ${{ matrix.catalog_branch }}"
-          
+
           case "${{ matrix.catalog_branch }}" in
             catalog-main)
-              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_MAIN_TOKEN }}" >> "$GITHUB_ENV"
-              echo "DW_OWNER=main" >> "$GITHUB_ENV"
+              echo "CATALOG_TOKEN=${{ secrets.CATALOG_MAIN_TOKEN }}" >> "$GITHUB_ENV"
+              echo "DW_OWNER=catalog-main" >> "$GITHUB_ENV"
               ;;
             catalog-sandbox)
-              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_SANDBOX_TOKEN }}" >> "$GITHUB_ENV"
+              echo "CATALOG_TOKEN=${{ secrets.CATALOG_SANDBOX_TOKEN }}" >> "$GITHUB_ENV"
               echo "DW_OWNER=catalog-sandbox" >> "$GITHUB_ENV"
               ;;
             catalog-sources)
-              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_SOURCES_TOKEN }}" >> "$GITHUB_ENV"
+              echo "CATALOG_TOKEN=${{ secrets.CATALOG_SOURCES_TOKEN }}" >> "$GITHUB_ENV"
               echo "DW_OWNER=catalog-sources" >> "$GITHUB_ENV"
               ;;
             catalog-config)
-              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_CONFIG_TOKEN }}" >> "$GITHUB_ENV"
+              echo "CATALOG_TOKEN=${{ secrets.CATALOG_CONFIG_TOKEN }}" >> "$GITHUB_ENV"
               echo "DW_OWNER=catalog-config" >> "$GITHUB_ENV"
               ;;
             *)
@@ -61,10 +64,9 @@ jobs:
               exit 1
               ;;
           esac
-          
-          echo "DW_OWNER set to: $DW_OWNER"
 
-      # ✅ Merge latest main into the checked-out catalog branch
+          echo "CATALOG_BRANCH=${{ matrix.catalog_branch }}" >> "$GITHUB_ENV"
+
       - name: Merge main into catalog branch
         run: |
           echo "Merging main into ${{ matrix.catalog_branch }}..."
@@ -74,66 +76,32 @@ jobs:
             exit 1
           }
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
+      - name: Make scripts executable
         run: |
-          if [ -f requirements.txt ]; then
-            python -m pip install --upgrade pip
-            pip install -r requirements.txt
-          fi
+          chmod +x ./scripts/pull-promote.sh || true
 
-      # ---------------------------------------------------------
-      #   🔧 Normal file creation (simulated pull)
-      #   Demonstrates using CATALOG_TOKEN
-      # ---------------------------------------------------------
-      - name: Simulate catalog pull (create test file)
+      - name: Run pull-promote.sh
         env:
-          DW_AUTH_TOKEN: ${{ env.DW_AUTH_TOKEN }}
-          DW_OWNER:  ${{ env.DW_OWNER }}
+          API_BASE: ${{ env.API_BASE }}
+          CATALOG_TOKEN: ${{ env.CATALOG_TOKEN }}
+          DW_OWNER: ${{ env.DW_OWNER }}
+          CATALOG_BRANCH: ${{ env.CATALOG_BRANCH }}
         run: |
-          echo "Running test file creation for branch: ${{ matrix.catalog_branch }}"
-          echo "Using CATALOG_TOKEN (present? yes/no): ${DW_AUTH_TOKEN:+yes}"
-          echo "DW_OWNER set to: $DW_OWNER"
-          mkdir -p tests/output
-          TS=$(date +'%Y%m%d-%H%M%S')
-          FILE="tests/output/testfile_${{ matrix.catalog_branch }}_${TS}.txt"
-          echo "This is a test run for branch: ${{ matrix.catalog_branch }}" > "$FILE"
-          echo "Token set: ${DW_AUTH_TOKEN:+yes}" >> "$FILE"
-          cat "$FILE"
+          ./scripts/pull-promote.sh
 
-      # ---------------------------------------------------------
-      #   ⭐ Branch-Specific Logic
-      #   ONLY RUN promote.command for catalog-sandbox
-      # ---------------------------------------------------------
-      - name: Promote content (sandbox only)
-        if: matrix.catalog_branch == 'catalog-sandbox'
-        run: |
-          echo "Running promote.command for catalog-sandbox..."
-          echo "Contents are promoted."
-
-      # ---------------------------------------------------------
-      #   🔍 Git detection
-      # ---------------------------------------------------------
       - name: Check for changes
         id: git_status
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
-            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "changes=true" >> "$GITHUB_OUTPUT"
           else
-            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "changes=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # ---------------------------------------------------------
-      #   📝 Commit changes
-      # ---------------------------------------------------------
       - name: Commit and push changes
         if: steps.git_status.outputs.changes == 'true'
         run: |
-          ID=$(date +'%Y%m%d-%H%M%S')
+          ID=$(date -u +'%Y%m%d-%H%M%S')
           COMMIT_MSG="Catalog sync test commit (${{ matrix.catalog_branch }}) - ID:$ID"
           echo "Committing changes: $COMMIT_MSG"
           git add .

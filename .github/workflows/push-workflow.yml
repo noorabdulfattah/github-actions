@@ -1,32 +1,45 @@
 name: Push on merge into catalog-main
 
+# Global env
+env:
+  API_BASE: "https://api.data.world/v0"   # adjust as needed
+
 on:
   pull_request:
     branches:
-      - catalog-main   # base branch of the PR
+      - catalog-main
     types:
       - opened
       - synchronize
       - reopened
-      - closed         # includes merged
+      - closed
 
   push:
     branches:
       - catalog-main
-  workflow_dispatch:        # allow manual run from Actions tab
+
+  workflow_dispatch:
 
 jobs:
   push-after-merge:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write    # needed to push commits
+      contents: write
+
+    env:
+      DW_OWNER: catalog-main
+      CATALOG_TOKEN: ${{ secrets.CATALOG_MAIN_TOKEN }}
+      ENVIRONMENT: prod
 
     steps:
       - name: Show push info
         run: |
           echo "Ref: ${{ github.ref }}"
           echo "Commit: ${{ github.sha }}"
+          echo "DW_OWNER: $DW_OWNER"
+          echo "ENVIRONMENT: $ENVIRONMENT"
+          echo "API_BASE: $API_BASE"
 
       - name: Checkout catalog-main
         uses: actions/checkout@v4
@@ -39,19 +52,18 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      # --------------------------------------------
-      # Replace this block with your REAL push logic
-      # --------------------------------------------
-      - name: Run push command
+      - name: Make scripts executable
         run: |
-          echo "Running push command after changes reached catalog-main..."
-          # Example test action (you can delete in real setup):
-          mkdir -p tests/push-output
-          echo "Push executed at $(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
-            > tests/push-output/push_run_$(date -u +'%Y%m%d-%H%M%S').txt
-          # REAL COMMAND GOES HERE, e.g.:
-          # ./push.command
-          # python -m src.catalog_synchronizer.cli push --env prod
+          chmod +x ./scripts/push.sh || true
+
+      - name: Run push.sh
+        env:
+          API_BASE: ${{ env.API_BASE }}
+          CATALOG_TOKEN: ${{ env.CATALOG_TOKEN }}
+          DW_OWNER: ${{ env.DW_OWNER }}
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+        run: |
+          ./scripts/push.sh
 
       - name: Check for changes
         id: git_status
@@ -70,8 +82,8 @@ jobs:
           echo "Committing changes: $COMMIT_MSG"
           git add .
           git commit -m "$COMMIT_MSG"
-          git push origin catalog-main
+          git.push origin catalog-main
 
       - name: No changes to commit
         if: steps.git_status.outputs.changes == 'false'
-        run: echo "No local changes after push command; nothing to commit."
+        run: echo "No local changes after push.sh; nothing to commit."
