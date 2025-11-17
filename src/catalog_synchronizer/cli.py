@@ -118,7 +118,6 @@ def main(argv: list[str] | None = None) -> int:
         or os.getenv("CATALOG_TOKEN")
         or _env_or_default("DW_AUTH_TOKEN", required=True)
     )
-    environment = args.environment or _env_or_default("ENVIRONMENT", default="dev")
 
     if args.command == "pull":
         pull_mod.run_pull(
@@ -126,7 +125,6 @@ def main(argv: list[str] | None = None) -> int:
             token=token,
             api_base=api_base,
             branch=args.branch,
-            environment=environment,
         )
 
     elif args.command == "promote":
@@ -143,7 +141,6 @@ def main(argv: list[str] | None = None) -> int:
             owner=owner,
             token=token,
             api_base=api_base,
-            environment=environment,
         )
 
     else:
