@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-import sys
 
 from . import pull as pull_mod
 from . import push as push_mod
