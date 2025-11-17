@@ -1,0 +1,2 @@
+[console_scripts]
+catalog-sync = catalog_synchronizer.cli:main
