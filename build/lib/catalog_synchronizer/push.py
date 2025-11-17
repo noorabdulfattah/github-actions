@@ -6,13 +6,13 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def run_push(*, owner: str, token: str, api_base: str, environment: str) -> None:
+def run_push(*, owner: str, token: str, api_base: str) -> None:
     """
     Push catalog configuration/metadata to data.world.
     """
     log.info(
         "Running push: owner=%s env=%s api_base=%s",
-        owner, environment, api_base
+        owner, api_base
     )
     # TODO: your real push logic:
     # - read local config
