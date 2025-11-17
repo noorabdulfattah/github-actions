@@ -40,12 +40,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="Auth token (default: CATALOG_TOKEN or DW_AUTH_TOKEN env).",
     )
     parser.add_argument(
-        "--env",
-        dest="environment",
-        default=None,
-        help="Logical environment (dev/stage/prod; default: ENVIRONMENT env).",
-    )
-    parser.add_argument(
         "-v", "--verbose",
         action="count",
         default=0,
@@ -57,35 +51,43 @@ def build_parser() -> argparse.ArgumentParser:
     # pull
     pull_p = subparsers.add_parser(
         "pull",
-        help="Pull projects/files from data.world into the repo.",
+        help="Pull projects/files from data catalog into the repo.",
     )
     pull_p.add_argument(
-        "--branch",
-        dest="branch",
+        "--from",
+        dest="from_catalog",
         required=True,
-        help="Catalog branch name (e.g., catalog-sandbox, catalog-main).",
+        help="Source catalog/org name (e.g., catalog-sandbox, main).",
     )
 
     # promote
     promote_p = subparsers.add_parser(
         "promote",
-        help="Promote content from sandbox branch to main branch.",
+        help="Promote content from sandbox catalog to main catalog.",
     )
     promote_p.add_argument(
-        "--from-branch",
+        "--from",
+        dest="from_catalog",
         required=True,
-        help="Source branch (e.g., catalog-sandbox).",
+        help="Source catalog (e.g., catalog-sandbox).",
     )
     promote_p.add_argument(
-        "--to-branch",
+        "--to",
+        dest="to_catalog",
         required=True,
-        help="Target branch (e.g., catalog-main).",
+        help="Target catalog (e.g., main).",
     )
 
     # push
-    subparsers.add_parser(
+    push_p = subparsers.add_parser(
         "push",
-        help="Push catalog configuration to data.world.",
+        help="Push promoted projects to the target catalog",
+    )
+    push_p.add_argument(
+        "--to",
+        dest="to_catalog",
+        required=True,
+        help="Target catalog (e.g., main).",
     )
 
     return parser
@@ -111,21 +113,19 @@ def main(argv: list[str] | None = None) -> int:
 
     owner = args.owner or _env_or_default("DW_OWNER", required=True)
     api_base = args.api_base or _env_or_default("API_BASE", required=True)
-    # token can come from CLI, CATALOG_TOKEN, or DW_AUTH_TOKEN
     token = (
         args.token
         or os.getenv("CATALOG_TOKEN")
         or _env_or_default("DW_AUTH_TOKEN", required=True)
     )
-    environment = args.environment or _env_or_default("ENVIRONMENT", default="dev")
 
     if args.command == "pull":
+        # here we interpret "from_catalog" as the catalog/branch to pull from
         pull_mod.run_pull(
             owner=owner,
             token=token,
             api_base=api_base,
-            branch=args.branch,
-            environment=environment,
+            branch=args.from_catalog,
         )
 
     elif args.command == "promote":
@@ -133,16 +133,17 @@ def main(argv: list[str] | None = None) -> int:
             owner=owner,
             token=token,
             api_base=api_base,
-            from_branch=args.from_branch,
-            to_branch=args.to_branch,
+            from_branch=args.from_catalog,
+            to_branch=args.to_catalog,
         )
 
     elif args.command == "push":
+        # adjust signature if your run_push expects a target catalog
         push_mod.run_push(
             owner=owner,
             token=token,
             api_base=api_base,
-            environment=environment,
+            # e.g., target_catalog=args.to_catalog
         )
 
     else:
