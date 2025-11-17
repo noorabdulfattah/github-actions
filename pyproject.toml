@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "catalog-synchronizer"
+version = "0.1.0"
+description = "Data.world catalog synchronizer"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+catalog-sync = "catalog_synchronizer.cli:main"

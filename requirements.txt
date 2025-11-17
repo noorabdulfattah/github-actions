@@ -1,1 +1,17 @@
-pandas
+# Core functionality
+requests
+python-dotenv
+
+# CLI + packaging
+click
+argparse          # optional; built-in but harmless if you want consistency
+# OR prefer only argparse (standard library) and remove click
+
+# YAML / JSON / file operations
+PyYAML
+
+# Data validation (optional but recommended)
+pydantic>=2.0
+
+# Logging helpers (optional)
+rich              # pretty logs, color output; optional
