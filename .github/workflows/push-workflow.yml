@@ -28,7 +28,7 @@ jobs:
       contents: write
 
     env:
-      DW_OWNER: catalog-main
+      DW_OWNER: main
       DW_AUTH_TOKEN: ${{ secrets.CATALOG_MAIN_TOKEN }}
 
     steps:
