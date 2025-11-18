@@ -120,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "pull":
         pull_mod(
-            owner= args.from_catalog or owner,
+            owner=args.from_catalog or owner,
             token=token,
             api_base=api_base,
         )

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BRANCH="${CATALOG_BRANCH:-unknown}"
+DW_OWNER="${DW_OWNER:-unknown}"
 
-echo "Running catalog-sync pull for $BRANCH ..."
-catalog-sync pull --from "$BRANCH"
+echo "Running catalog-sync pull for $DW_OWNER ..."
+catalog-sync pull --from "$DW_OWNER"
 
-if [[ "$BRANCH" == "catalog-sandbox" ]]; then
+if [[ "$DW_OWNER" == "catalog-sandbox" ]]; then
   echo "Running promotion from sandbox to main..."
   catalog-sync promote --from "catalog-sandbox" --to "main"
 fi
