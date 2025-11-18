@@ -5,22 +5,22 @@ import argparse
 import logging
 import os
 
-from . import pull as pull_mod
-from . import push as push_mod
-from . import promote as promote_mod
+from .pull import main as pull_mod
+from .push import main as push_mod
+from .promote import main as promote_mod
 
 
 def _env_or_default(name: str, default: str | None = None, required: bool = False) -> str:
-    v = os.getenv(name, default)
-    if required and not v:
+    variable = os.getenv(name, default)
+    if required and not variable:
         raise SystemExit(f"Missing required env var: {name}")
-    return v
+    return variable
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="catalog-sync",
-        description="Synchronize data.world catalog projects/configs.",
+        description="Synchronize data catalog projects/configs.",
     )
 
     # Global options (can override env)
@@ -37,7 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--token",
         default=None,
-        help="Auth token (default: CATALOG_TOKEN or DW_AUTH_TOKEN env).",
+        help="Auth token (default: DW_AUTH_TOKEN env).",
     )
     parser.add_argument(
         "-v", "--verbose",
@@ -115,35 +115,29 @@ def main(argv: list[str] | None = None) -> int:
     api_base = args.api_base or _env_or_default("API_BASE", required=True)
     token = (
         args.token
-        or os.getenv("CATALOG_TOKEN")
         or _env_or_default("DW_AUTH_TOKEN", required=True)
     )
 
     if args.command == "pull":
-        # here we interpret "from_catalog" as the catalog/branch to pull from
-        pull_mod.run_pull(
-            owner=owner,
+        pull_mod(
+            owner=args.from_catalog or owner,
             token=token,
             api_base=api_base,
-            branch=args.from_catalog,
         )
 
     elif args.command == "promote":
-        promote_mod.run_promote(
-            owner=owner,
+        promote_mod(
+            owner=args.from_catalog or owner,
             token=token,
             api_base=api_base,
-            from_branch=args.from_catalog,
-            to_branch=args.to_catalog,
+            target=args.to_catalog,
         )
 
     elif args.command == "push":
-        # adjust signature if your run_push expects a target catalog
-        push_mod.run_push(
-            owner=owner,
+        push_mod(
+            owner=args.to_catalog or owner,
             token=token,
             api_base=api_base,
-            # e.g., target_catalog=args.to_catalog
         )
 
     else:
