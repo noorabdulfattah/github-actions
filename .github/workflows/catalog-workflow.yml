@@ -24,7 +24,6 @@ jobs:
           - catalog-main
           - catalog-sandbox
           - catalog-sources
-          - catalog-config
           - ontology
 
     steps:
@@ -55,10 +54,6 @@ jobs:
             catalog-sources)
               echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_SOURCES_TOKEN }}" >> "$GITHUB_ENV"
               echo "DW_OWNER=catalog-sources" >> "$GITHUB_ENV"
-              ;;
-            catalog-config)
-              echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_CONFIG_TOKEN }}" >> "$GITHUB_ENV"
-              echo "DW_OWNER=catalog-config" >> "$GITHUB_ENV"
               ;;
             ontology)
               echo "DW_AUTH_TOKEN=${{ secrets.CATALOG_ONTOLOGY_TOKEN }}" >> "$GITHUB_ENV"
@@ -95,7 +90,6 @@ jobs:
           API_BASE: ${{ env.API_BASE }}
           DW_AUTH_TOKEN: ${{ env.DW_AUTH_TOKEN }}
           DW_OWNER: ${{ env.DW_OWNER }}
-          CATALOG_BRANCH: ${{ env.CATALOG_BRANCH }}
         run: |
           ./scripts/pull-promote.sh
 

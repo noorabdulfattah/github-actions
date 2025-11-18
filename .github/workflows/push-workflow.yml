@@ -2,7 +2,7 @@ name: Push on merge into catalog-main
 
 # Global env
 env:
-  API_BASE: "https://api.data.world/v0"   # adjust as needed
+  API_BASE: "https://api.data.world/v0"
 
 on:
   pull_request:
@@ -30,7 +30,6 @@ jobs:
     env:
       DW_OWNER: catalog-main
       DW_AUTH_TOKEN: ${{ secrets.CATALOG_MAIN_TOKEN }}
-      ENVIRONMENT: prod
 
     steps:
       - name: Show push info
@@ -38,7 +37,6 @@ jobs:
           echo "Ref: ${{ github.ref }}"
           echo "Commit: ${{ github.sha }}"
           echo "DW_OWNER: $DW_OWNER"
-          echo "ENVIRONMENT: $ENVIRONMENT"
           echo "API_BASE: $API_BASE"
 
       - name: Checkout catalog-main
@@ -66,7 +64,6 @@ jobs:
           API_BASE: ${{ env.API_BASE }}
           DW_AUTH_TOKEN: ${{ env.DW_AUTH_TOKEN }}
           DW_OWNER: ${{ env.DW_OWNER }}
-          ENVIRONMENT: ${{ env.ENVIRONMENT }}
         run: |
           ./scripts/push.sh
 
