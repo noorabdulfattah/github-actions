@@ -51,8 +51,8 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
           # NEW: merge latest main into catalog-main before proceeding
-          - name: Merge main into catalog-main
-            run: |
+      - name: Merge main into catalog-main
+        run: |
               echo "Merging main into catalog-main..."
               git fetch origin main
               git merge --no-edit origin/main || {
