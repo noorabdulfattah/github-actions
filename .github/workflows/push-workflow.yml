@@ -84,7 +84,7 @@ jobs:
           echo "Committing changes: $COMMIT_MSG"
           git add .
           git commit -m "$COMMIT_MSG"
-          git.push origin catalog-main
+          git push origin catalog-main
 
       - name: No changes to commit
         if: steps.git_status.outputs.changes == 'false'
