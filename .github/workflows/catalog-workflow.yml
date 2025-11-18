@@ -24,7 +24,6 @@ jobs:
           - catalog-main
           - catalog-sandbox
           - catalog-sources
-          - catalog-config
           - ontology
 
     steps:
