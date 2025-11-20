@@ -3,6 +3,7 @@ name: Push on merge into catalog-main
 # Global env
 env:
   API_BASE: "https://api.data.world/v0"
+  PIP_INDEX_URL: "https://pypi.org/simple"
 
 on:
   pull_request:
@@ -50,7 +51,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # NEW: merge latest main into catalog-main before proceeding
+        # merge latest main into catalog-main before proceeding
       - name: Merge main into catalog-main
         run: |
               echo "Merging main into catalog-main..."

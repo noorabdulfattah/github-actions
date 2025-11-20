@@ -12,7 +12,8 @@ on:
 
 # Global API_BASE for all jobs
 env:
-  API_BASE: "https://api.data.world/v0"   # adjust to your real base
+  API_BASE: "https://api.data.world/v0"
+  PIP_INDEX_URL: "https://pypi.org/simple"
 
 jobs:
   pull-and-commit:
@@ -75,6 +76,9 @@ jobs:
             echo "Merge conflict while merging main into ${{ matrix.catalog_branch }}."
             exit 1
           }
+
+          echo "Pushing merged branch to origin/${{ matrix.catalog_branch }}..."
+          git push origin ${{ matrix.catalog_branch }}
 
       - name: Install package
         run: |
